@@ -85,10 +85,12 @@ func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var tmpl = `
 <html>
-<head>Front Door</head>
+<head>
+<title>Front Door</title>
+</head>
 <body>
 <p>
-Some down this will be a guestbook
+Some day this will be a guestbook
 </p>
 </body>
 </html>
