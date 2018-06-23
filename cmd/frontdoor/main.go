@@ -23,7 +23,7 @@ func main() {
 	addr := os.Getenv("FRONTDOOR_ADDR")
 
 	h := frontdoor.NewSite(logger)
-	server := newServer(logger, addr, h)
+	server := newServer(addr, h)
 
 	go func(server *http.Server) {
 		logger.WithFields(logrus.Fields{
@@ -59,7 +59,7 @@ func graceful(server *http.Server, logger logrus.FieldLogger, timeout time.Durat
 	logger.Info("service stopped")
 }
 
-func newServer(logger logrus.FieldLogger, addr string, h http.Handler) *http.Server {
+func newServer(addr string, h http.Handler) *http.Server {
 	if addr == "" {
 		addr = defaultAddr
 	}
