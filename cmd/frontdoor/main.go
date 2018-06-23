@@ -76,7 +76,11 @@ func newServer(logger logrus.FieldLogger, addr string, h http.Handler) *http.Ser
 type site struct{}
 
 func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(tmpl))
+	w.Header().Set("Content-Type", "text/html")
+	_, err := w.Write([]byte(tmpl))
+	if err != nil {
+		logrus.WithError(err).Error("write error")
+	}
 }
 
 var tmpl = `
