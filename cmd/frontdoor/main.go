@@ -22,7 +22,7 @@ func main() {
 
 	addr := os.Getenv("FRONTDOOR_ADDR")
 
-	h := &site{}
+	h := frontdoor.NewSite(logger)
 	server := newServer(logger, addr, h)
 
 	go func(server *http.Server) {
@@ -31,7 +31,8 @@ func main() {
 		}).Info("service is listening")
 
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			logrus.WithError(err).Fatal("service received an unexpected error")
+			logrus.WithError(err).Error("service received an unexpected error")
+			os.Exit(1)
 		}
 	}(server)
 
@@ -63,35 +64,5 @@ func newServer(logger logrus.FieldLogger, addr string, h http.Handler) *http.Ser
 		addr = defaultAddr
 	}
 
-	m := frontdoor.LoggerMiddleware{
-		Logger: logger,
-		Name:   "frontdoor",
-	}
-
-	mh := m.Handler(h, "home")
-
-	return &http.Server{Addr: addr, Handler: mh}
+	return &http.Server{Addr: addr, Handler: h}
 }
-
-type site struct{}
-
-func (s *site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	_, err := w.Write([]byte(tmpl))
-	if err != nil {
-		logrus.WithError(err).Error("write error")
-	}
-}
-
-var tmpl = `
-<html>
-<head>
-<title>Front Door</title>
-</head>
-<body>
-<p>
-Some day this will be a guestbook
-</p>
-</body>
-</html>
-`
