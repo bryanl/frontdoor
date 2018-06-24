@@ -21,11 +21,13 @@ func NewSite(logger logrus.FieldLogger, repo Repository) (*Site, error) {
 	}
 
 	wrapWithLogger("frontdoor", "home", homeHandler, logger)
-
 	r.Handle("/", homeHandler).Methods(http.MethodGet)
 
 	updateHandler := wrapWithLogger("frontdoor", "update", newUpdateHandler(logger, repo), logger)
 	r.Handle("/update", updateHandler).Methods(http.MethodPost)
+
+	healthzHandler := wrapWithLogger("frontdoor", "healthz", newHealthzHandler(repo), logger)
+	r.Handle("/healthz", healthzHandler).Methods(http.MethodGet)
 
 	return &Site{r: r}, nil
 }

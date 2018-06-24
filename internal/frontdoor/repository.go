@@ -34,6 +34,7 @@ func NewPool(addr string) *redis.Pool {
 type Repository interface {
 	AddName(context.Context, string) error
 	ListNames(context.Context) ([]string, error)
+	Ready(context.Context) error
 }
 
 type RedisRepository struct {
@@ -90,4 +91,24 @@ func (r *RedisRepository) ListNames(ctx context.Context) ([]string, error) {
 	}
 
 	return names, nil
+}
+
+func (r *RedisRepository) Ready(ctx context.Context) error {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return errors.Wrap(err, "retrieving redis connection from pool")
+	}
+
+	defer conn.Close()
+
+	resp, err := redis.String(conn.Do("PING"))
+	if err != nil {
+		return errors.Wrap(err, "pinging redis server")
+	}
+
+	if resp != "PONG" {
+		return errors.Errorf("expected PONG; server returned %s", resp)
+	}
+
+	return nil
 }
