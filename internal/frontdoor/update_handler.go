@@ -7,32 +7,35 @@ import (
 )
 
 type updateHandler struct {
-	logger logrus.FieldLogger
+	logger     logrus.FieldLogger
+	repository Repository
 }
 
-func newUpdateHandler(logger logrus.FieldLogger) *updateHandler {
+func newUpdateHandler(logger logrus.FieldLogger, r Repository) *updateHandler {
 	if logger == nil {
 		logger = logrus.New()
 	}
 
-	return &updateHandler{logger: logger}
+	return &updateHandler{
+		logger:     logger,
+		repository: r,
+	}
 }
 
 func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		h.logger.WithError(err).Error("parsing form")
-		w.WriteHeader(http.StatusInternalServerError)
-
-		_, err = w.Write([]byte("internal server error"))
-		if err != nil {
-			h.logger.WithError(err).Error("write error")
-		}
-
+		http.Error(w, "parsing form", http.StatusInternalServerError)
 		return
 	}
 
 	name := r.Form.Get("name")
-	h.logger.WithField("name", name).Info("adding name to guestbook")
+	if err := h.repository.AddName(r.Context(), name); err != nil {
+		h.logger.WithError(err).
+			WithField("name", name).Error("adding name to list")
+		http.Error(w, "unable to add name", http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }

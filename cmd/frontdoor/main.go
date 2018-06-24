@@ -21,8 +21,16 @@ func main() {
 	logger := logrus.New()
 
 	addr := os.Getenv("FRONTDOOR_ADDR")
+	redisAddr := os.Getenv("FRONTDOOR_REDIS_ADDR")
 
-	h := frontdoor.NewSite(logger)
+	repo := frontdoor.NewRedisRepository(redisAddr, logger)
+
+	h, err := frontdoor.NewSite(logger, repo)
+	if err != nil {
+		logger.WithError(err).Error("initializing site")
+		os.Exit(1)
+	}
+
 	server := newServer(addr, h)
 
 	go func(server *http.Server) {

@@ -29,6 +29,10 @@
   name = "github.com/sirupsen/logrus"
   version = "1.0.5"
 
+[[constraint]]
+  name = "github.com/gomodule/redigo"
+  version = "2.0.0"
+
 [prune]
   go-tests = true
   unused-packages = true

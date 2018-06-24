@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,16 +12,22 @@ type Site struct {
 	r *mux.Router
 }
 
-func NewSite(logger logrus.FieldLogger) *Site {
+func NewSite(logger logrus.FieldLogger, repo Repository) (*Site, error) {
 	r := mux.NewRouter()
 
-	homeHandler := wrapWithLogger("frontdoor", "home", newHomeHandler(logger), logger)
+	homeHandler, err := newHomeHandler(logger, repo)
+	if err != nil {
+		return nil, errors.Wrap(err, "initializing home handler")
+	}
+
+	wrapWithLogger("frontdoor", "home", homeHandler, logger)
+
 	r.Handle("/", homeHandler).Methods(http.MethodGet)
 
-	updateHandler := wrapWithLogger("frontdoor", "update", newUpdateHandler(logger), logger)
+	updateHandler := wrapWithLogger("frontdoor", "update", newUpdateHandler(logger, repo), logger)
 	r.Handle("/update", updateHandler).Methods(http.MethodPost)
 
-	return &Site{r: r}
+	return &Site{r: r}, nil
 }
 
 func (s *Site) ServeHTTP(w http.ResponseWriter, r *http.Request) {
